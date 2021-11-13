@@ -193,7 +193,7 @@ func (l *Lexer) lexNull() *Token {
 	return nil
 }
 
-func (l *Lexer) Lex() ([]Token, error) {
+func (l *Lexer) lex() ([]Token, error) {
 	tokens := make([]Token, 0)
 	for len(l.s) != 0 {
 		//log.Println(len(str.s), str.s)
