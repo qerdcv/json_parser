@@ -72,11 +72,14 @@ type Lexer struct {
 	s       string
 }
 
-func New(str string) *Lexer {
+func New(str string) (*Lexer, error) {
+	if len(str) == 0 {
+		return nil, errors.New("empty string to parse")
+	}
 	return &Lexer{
 		current: rune(str[0]),
 		s:       str,
-	}
+	}, nil
 }
 
 func (l *Lexer) next() (rune, error) {
