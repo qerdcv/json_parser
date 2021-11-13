@@ -65,6 +65,8 @@ type Token struct {
 
 var (
 	EndOfFileErrors = errors.New("end of file")
+
+	EmptyStringError = errors.New("empty string to parse")
 )
 
 type Lexer struct {
@@ -74,7 +76,7 @@ type Lexer struct {
 
 func New(str string) (*Lexer, error) {
 	if len(str) == 0 {
-		return nil, errors.New("empty string to parse")
+		return nil, EmptyStringError
 	}
 	return &Lexer{
 		current: rune(str[0]),

@@ -9,6 +9,10 @@ import (
 	"gitlab.com/json_parser/lexer"
 )
 
+var (
+	EmptyTokensError = errors.New("expected non-empty list of tokens")
+)
+
 type Object struct {
 	Keys   []string
 	Values []interface{}
@@ -26,11 +30,14 @@ func (p *Parser) next() {
 	}
 }
 
-func New(tokens []lexer.Token) *Parser {
+func New(tokens []lexer.Token) (*Parser, error) {
+	if len(tokens) == 0 {
+		return nil, EmptyTokensError
+	}
 	return &Parser{
 		tokens:  tokens,
 		current: tokens[0],
-	}
+	}, nil
 }
 
 

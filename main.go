@@ -15,7 +15,11 @@ func main() {
 		log.Fatal(err)
 	}
 	tokens, _ := l.Lex()
-	p := parser.New(tokens)
+	p, err := parser.New(tokens)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	obj, _ := p.Parse(true)
 	fmt.Println(obj)
 }
