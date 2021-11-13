@@ -64,7 +64,7 @@ type Token struct {
 }
 
 var (
-	EndOfFileErrors = errors.New("end of file")
+	EndOfStringErrors = errors.New("end of string")
 
 	EmptyStringError = errors.New("empty string to parse")
 )
@@ -92,7 +92,7 @@ func (l *Lexer) next() (rune, error) {
 	}
 	l.current = rune(l.s[0])
 	l.s = ""
-	return l.current, EndOfFileErrors
+	return l.current, EndOfStringErrors
 }
 
 func (l *Lexer) Cut(lenToCut int) {
@@ -130,12 +130,12 @@ func (l *Lexer) lexString() (*Token, error) {
 		jsonString += string(ch)
 
 		_, err := l.next()
-		if errors.Is(err, EndOfFileErrors) {
+		if errors.Is(err, EndOfStringErrors) {
 			break
 		}
 	}
 	// log.Fatal("String must be ended with quote")
-	return nil, fmt.Errorf("string must be ended with \";\n%w", EndOfFileErrors) // TODO: add error
+	return nil, fmt.Errorf("string must be ended with \";\n%w", EndOfStringErrors) // TODO: add error
 }
 
 func (l *Lexer) lexNumber() (*Token, error) {
@@ -193,7 +193,7 @@ func (l *Lexer) lexNull() *Token {
 	return nil
 }
 
-func (l *Lexer) lex() ([]Token, error) {
+func (l *Lexer) Lex() ([]Token, error) {
 	tokens := make([]Token, 0)
 	for len(l.s) != 0 {
 		//log.Println(len(str.s), str.s)
