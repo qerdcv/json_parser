@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-
 	"gitlab.com/json_parser/lexer"
+	"gitlab.com/json_parser/parser"
 )
 
-func fromString(str string) []lexer.Token {
-	tokens := lexer.Lexer(str)
-	return tokens
-}
-
 func main() {
-	fmt.Println(fromString("{\"Jovani Jorjo\": 1231212, \"adult\": true, \"hasChild\": null}"))
+	strToParse := "{\"name\": \"Vadym\", \"age\": 20, \"gender\": \"male\", \"married\": false, \"kids\": null, \"languages\": [\"Python\", \"JavaScript\", \"Golang\"]}"
+	l := lexer.New(strToParse)
+	tokens, _ := l.Lex()
+	p := parser.New(tokens)
+	obj, _ := p.Parse(true)
+	fmt.Println(obj)
 }

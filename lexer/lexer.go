@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+type JsonToken int
+
 const (
 	JSONColon        = ':'
 	JSONBracketRight = ']'
@@ -18,6 +20,15 @@ const (
 	falseLen         = 5
 	trueLen          = 4
 	nullLen          = 4
+)
+
+const (
+	JSONFloat JsonToken = iota
+	JSONString
+	JSONInt
+	JSONBool
+	JSONNull
+	JSONSyntax
 )
 
 var (
@@ -49,20 +60,43 @@ var (
 
 type Token struct {
 	TokenType JsonToken
-	Val string
+	Val       string
 }
 
-
-type JsonToken int
-
-const (
-	JSONFloat JsonToken = iota
-	JSONString
-	JSONInt   
-	JSONBool  
-	JSONNull
-	JSONSyntax
+var (
+	EndOfFileErrors = errors.New("end of file")
 )
+
+type Lexer struct {
+	current rune
+	s       string
+}
+
+func New(str string) *Lexer {
+	return &Lexer{
+		current: rune(str[0]),
+		s:       str,
+	}
+}
+
+func (l *Lexer) next() (rune, error) {
+	if len(l.s) > 1 {
+		l.s = l.s[1:]
+		l.current = rune(l.s[0])
+		return l.current, nil
+	}
+	l.current = rune(l.s[0])
+	l.s = ""
+	return l.current, EndOfFileErrors
+}
+
+func (l *Lexer) Cut(lenToCut int) {
+	l.s = l.s[lenToCut:]
+	if len(l.s) != 0 {
+		l.current = rune(l.s[0])
+	}
+	// TODO: think about error
+}
 
 func contains(ch rune, slice []rune) bool {
 	for _, el := range slice {
@@ -73,24 +107,24 @@ func contains(ch rune, slice []rune) bool {
 	return false
 }
 
-func lexString(str *JString) (*Token, error) {
+func (l *Lexer) lexString() (*Token, error) {
 	jsonString := ""
 
-	if str.current == JSONQuote {
-		str.next()
+	if l.current == JSONQuote {
+		l.next()
 	} else {
 		return nil, nil
 	}
 
 	for {
-		ch := str.current
+		ch := l.current
 		if ch == JSONQuote {
-			str.next()
+			l.next()
 			return &Token{TokenType: JSONString, Val: jsonString}, nil
 		}
 		jsonString += string(ch)
 
-		_, err := str.next()
+		_, err := l.next()
 		if errors.Is(err, EndOfFileErrors) {
 			break
 		}
@@ -99,12 +133,12 @@ func lexString(str *JString) (*Token, error) {
 	return nil, fmt.Errorf("string must be ended with \";\n%w", EndOfFileErrors) // TODO: add error
 }
 
-func lexNumber(str *JString) (*Token, error) {
+func (l *Lexer) lexNumber() (*Token, error) {
 	jsonNumber := ""
 	isFloat := false
 
 	for {
-		ch := str.current;
+		ch := l.current
 		if contains(ch, numberChr) {
 			if ch == '.' {
 				isFloat = true
@@ -113,7 +147,7 @@ func lexNumber(str *JString) (*Token, error) {
 		} else {
 			break
 		}
-		_, err := str.next()
+		_, err := l.next()
 		if err != nil {
 			break
 		}
@@ -130,36 +164,36 @@ func lexNumber(str *JString) (*Token, error) {
 	return &Token{TokenType: JSONInt, Val: jsonNumber}, nil
 }
 
-func lexBool(str *JString) *Token {
-	strLen := len(str.s)
+func (l *Lexer) lexBool() *Token {
+	strLen := len(l.s)
 
-	if strLen >= trueLen && str.s[:trueLen] == "true" {
-		str.Cut(trueLen)
+	if strLen >= trueLen && l.s[:trueLen] == "true" {
+		l.Cut(trueLen)
 		return &Token{TokenType: JSONBool, Val: "true"}
-	} else if strLen >= falseLen && str.s[:falseLen] == "false" {
-		str.Cut(falseLen)
+	} else if strLen >= falseLen && l.s[:falseLen] == "false" {
+		l.Cut(falseLen)
 		return &Token{TokenType: JSONBool, Val: "false"}
 	}
 	return nil
 }
 
-func lexNull(str *JString) *Token {
-	strLen := len(str.s)
+func (l *Lexer) lexNull() *Token {
+	strLen := len(l.s)
 
-	if strLen >= nullLen && str.s[:nullLen] == "null" {
-		str.Cut(nullLen)
+	if strLen >= nullLen && l.s[:nullLen] == "null" {
+		l.Cut(nullLen)
 		return &Token{TokenType: JSONNull, Val: "null"}
 	}
 
 	return nil
 }
 
-func Lexer(str *JString) ([]Token, error) {
+func (l *Lexer) Lex() ([]Token, error) {
 	tokens := make([]Token, 0)
-	for len(str.s) != 0 {
+	for len(l.s) != 0 {
 		//log.Println(len(str.s), str.s)
 		// ---- string ----
-		jsonString, err := lexString(str)
+		jsonString, err := l.lexString()
 		if err != nil {
 			return nil, err
 		}
@@ -169,31 +203,31 @@ func Lexer(str *JString) ([]Token, error) {
 		}
 
 		// ---- number ----
-		jsonNumber, _ := lexNumber(str)
+		jsonNumber, _ := l.lexNumber()
 		if jsonNumber != nil {
 			tokens = append(tokens, *jsonNumber)
 		}
 
 		// ---- bool -----
-		jsonBool := lexBool(str)
+		jsonBool := l.lexBool()
 		if jsonBool != nil {
 			tokens = append(tokens, *jsonBool)
 		}
 
 		// ---- null ----
-		jsonNull := lexNull(str)
+		jsonNull := l.lexNull()
 
 		if jsonNull != nil {
 			tokens = append(tokens, *jsonNull)
 		}
-	
+
 		// ---- json syntax ----
-		ch := str.current
+		ch := l.current
 		if contains(ch, jsonWhitespace) {
-			str.next()
+			l.next()
 		} else if contains(ch, jsonSyntax) {
 			tokens = append(tokens, Token{TokenType: JSONSyntax, Val: string(ch)})
-			str.next()
+			l.next()
 		} else {
 			log.Printf("Invalid char %c", ch)
 			os.Exit(1)

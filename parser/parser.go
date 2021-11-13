@@ -33,35 +33,35 @@ func New(tokens []lexer.Token) *Parser {
 
 
 
-func parseObject(parser *Parser) map[string]interface{} {
+func (p *Parser) parseObject() map[string]interface{} {
 	object := make(map[string]interface{}, 0)
 
-	t := parser.current
+	t := p.current
 	if t.Val == string(lexer.JSONBraceRight) {
 		return object
 	}
 
 	for {
-		key := parser.current
+		key := p.current
 
 		if key.TokenType == lexer.JSONString {
-			parser.next()
+			p.next()
 		} else {
 			return object // TODO: add err
 		}
 
-		if parser.current.Val != string(lexer.JSONColon) {
+		if p.current.Val != string(lexer.JSONColon) {
 			return object
 		}
-		parser.next()
+		p.next()
 
-		value, _ := Parse(parser, false)
+		value, _ := p.Parse(false)
 
 		object[key.Val] = value
 
-		parser.next()
+		p.next()
 
-		if parser.current.Val == string(lexer.JSONBraceRight) {
+		if p.current.Val == string(lexer.JSONBraceRight) {
 			return object
 		}
 		//else if parser.current.Val != string(lexer.JSONComma) {
@@ -70,42 +70,42 @@ func parseObject(parser *Parser) map[string]interface{} {
 	}
 }
 
-func parseList(parser *Parser) []interface{} {
+func (p *Parser) parseList() []interface{} {
 	var list []interface{}
-	token := parser.current
+	token := p.current
 	if token.Val == string(lexer.JSONBracketRight) {
 		return list
 	}
 
 	for {
-		val, _ := Parse(parser, false)
+		val, _ := p.Parse(false)
 		list = append(list, val)
 
-		token = parser.current
+		token = p.current
 		if token.Val == string(lexer.JSONBracketRight) {
 			return list
 		} else if token.Val != string(lexer.JSONComma) {
 			return list // TODO: add error
 		} else {
-			parser.next()
+			p.next()
 		}
 	}
 }
 
-func Parse(parser *Parser, isRoot bool) (interface{}, error) {
-	token := parser.current
-	parser.next()
+func (p *Parser) Parse(isRoot bool) (interface{}, error) {
+	token := p.current
+	p.next()
 
 	if isRoot && token.Val != string(lexer.JSONBraceLeft) {
 		return nil, errors.New("JSON must starts with \"")
 	}
 
 	if token.Val == string(lexer.JSONBraceLeft) {
-		return parseObject(parser), nil
+		return p.parseObject(), nil
 	}
 
 	if token.Val == string(lexer.JSONBracketLeft) {
-		return parseList(parser), nil
+		return p.parseList(), nil
 	}
 
 	switch token.TokenType {
@@ -129,5 +129,5 @@ func Parse(parser *Parser, isRoot bool) (interface{}, error) {
 		return strconv.Atoi(token.Val)
 	}
 
-	return parser.current, nil
+	return p.current, nil
 }
