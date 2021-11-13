@@ -2,6 +2,8 @@ package parser
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"strconv"
 
 	"gitlab.com/json_parser/lexer"
@@ -59,14 +61,14 @@ func (p *Parser) parseObject() map[string]interface{} {
 
 		object[key.Val] = value
 
+		current := p.current.Val
 		p.next()
 
-		if p.current.Val == string(lexer.JSONBraceRight) {
+		if current == string(lexer.JSONBraceRight) {
 			return object
+		} else if current != string(lexer.JSONComma) {
+			log.Fatal(fmt.Sprintf("expected comma have %s", current))
 		}
-		//else if parser.current.Val != string(lexer.JSONComma) {
-		//	return object // TODO: Add error
-		//}
 	}
 }
 
@@ -74,6 +76,7 @@ func (p *Parser) parseList() []interface{} {
 	var list []interface{}
 	token := p.current
 	if token.Val == string(lexer.JSONBracketRight) {
+		p.next()
 		return list
 	}
 
@@ -82,12 +85,12 @@ func (p *Parser) parseList() []interface{} {
 		list = append(list, val)
 
 		token = p.current
+
+		p.next()
 		if token.Val == string(lexer.JSONBracketRight) {
 			return list
 		} else if token.Val != string(lexer.JSONComma) {
-			return list // TODO: add error
-		} else {
-			p.next()
+			log.Fatal(fmt.Sprintf("expected comma have %s", token.Val))
 		}
 	}
 }
@@ -96,7 +99,7 @@ func (p *Parser) Parse(isRoot bool) (interface{}, error) {
 	token := p.current
 	p.next()
 
-	if isRoot && token.Val != string(lexer.JSONBraceLeft) {
+	if isRoot && (token.Val != string(lexer.JSONBraceLeft) && token.Val != string(lexer.JSONBracketLeft)) {
 		return nil, errors.New("JSON must starts with \"")
 	}
 
