@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"gitlab.com/json_parser/lexer"
 	"gitlab.com/json_parser/parser"
+	"gitlab.com/json_parser/reader"
+	"log"
 )
 
 func main() {
-	strToParse := "{\"name\": \"Vadym\", \"age\": 20, \"gender\": \"male\", \"married\": false, \"kids\": null, \"languages\": [\"Python\", \"JavaScript\", \"Golang\"]}"
-	l := lexer.New(strToParse)
+	r := reader.New()
+	l, err := lexer.New(r.Read())
+	if err != nil {
+		log.Fatal(err)
+	}
 	tokens, _ := l.Lex()
 	p := parser.New(tokens)
 	obj, _ := p.Parse(true)
