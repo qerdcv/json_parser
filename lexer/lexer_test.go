@@ -17,7 +17,7 @@ func TestNew(t *testing.T) {
 	}
 
 
-	l, err = New("ABCD")
+	l, _ = New("ABCD")
 	if got, exp := l.s, "ABCD"; got != exp {
 		t.Fatalf("expected %s, got %s", exp, got)
 	}

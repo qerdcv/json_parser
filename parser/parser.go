@@ -43,7 +43,7 @@ func New(tokens []lexer.Token) (*Parser, error) {
 
 
 func (p *Parser) parseObject() map[string]interface{} {
-	object := make(map[string]interface{}, 0)
+	object := make(map[string]interface{})
 
 	t := p.current
 	if t.Val == string(lexer.JSONBraceRight) {

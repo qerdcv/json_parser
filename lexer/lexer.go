@@ -122,7 +122,10 @@ func (l *Lexer) lexString() (*Token, error) {
 	jsonString := ""
 
 	if l.current == JSONQuote {
-		l.next()
+		_, err := l.next()
+		if err != nil {
+			log.Println(err)
+		}
 	} else {
 		return nil, nil
 	}
@@ -130,7 +133,11 @@ func (l *Lexer) lexString() (*Token, error) {
 	for {
 		ch := l.current
 		if string(ch) == JSONQuote {
-			l.next()
+			_, err := l.next()
+			if err != nil {
+				log.Println(err)
+			}
+
 			return &Token{TokenType: JSONString, Val: jsonString}, nil
 		}
 		jsonString += string(ch)
@@ -233,10 +240,17 @@ func (l *Lexer) Lex() ([]Token, error) {
 		// ---- json syntax ----
 		ch := l.current
 		if contains(ch, jsonWhitespace) {
-			l.next()
+			_, err := l.next()
+			if err != nil {
+				log.Println(err)
+			}
 		} else if contains(ch, jsonSyntax) {
 			tokens = append(tokens, Token{TokenType: JSONSyntax, Val: string(ch)})
-			l.next()
+			_, err := l.next()
+			if err != nil {
+				log.Println(err)
+			}
+
 		} else {
 			log.Printf("Invalid char %s", ch)
 			os.Exit(1)
