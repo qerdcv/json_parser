@@ -10,13 +10,13 @@ import (
 type JsonToken int
 
 const (
-	JSONColon        = ':'
-	JSONBracketRight = ']'
-	JSONBracketLeft  = '['
-	JSONBraceLeft    = '{'
-	JSONBraceRight   = '}'
-	JSONComma        = ','
-	JSONQuote        = '"'
+	JSONColon        = ":"
+	JSONBracketRight = "]"
+	JSONBracketLeft  = "["
+	JSONBraceLeft    = "{"
+	JSONBraceRight   = "}"
+	JSONComma        = ","
+	JSONQuote        = "\""
 	falseLen         = 5
 	trueLen          = 4
 	nullLen          = 4
@@ -32,8 +32,14 @@ const (
 )
 
 var (
-	jsonWhitespace = []rune{' ', '\t', '\b', '\n', '\r'}
-	jsonSyntax     = []rune{
+	jsonWhitespace = []string{
+		" ",
+		"\t",
+		"\b",
+		"\n",
+		"\r",
+	}
+	jsonSyntax     = []string{
 		JSONComma,
 		JSONColon,
 		JSONBracketLeft,
@@ -41,20 +47,20 @@ var (
 		JSONBraceLeft,
 		JSONBraceRight,
 	}
-	numberChr = []rune{
-		'0',
-		'1',
-		'2',
-		'3',
-		'4',
-		'5',
-		'6',
-		'7',
-		'8',
-		'9',
-		'-',
-		'e',
-		'.',
+	numberChr = []string{
+		"0",
+		"1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"-",
+		"e",
+		".",
 	}
 )
 
@@ -64,46 +70,46 @@ type Token struct {
 }
 
 var (
-	EndOfStringErrors = errors.New("end of string")
+	ErrEndOfString = errors.New("end of string")
 
-	EmptyStringError = errors.New("empty string to parse")
+	ErrEmptyString = errors.New("empty string to parse")
 )
 
 type Lexer struct {
-	current rune
+	current string
 	s       string
 }
 
 func New(str string) (*Lexer, error) {
-	if len(str) == 0 {
-		return nil, EmptyStringError
+	if str == "" {
+		return nil, ErrEmptyString
 	}
 	return &Lexer{
-		current: rune(str[0]),
+		current: string(str[0]),
 		s:       str,
 	}, nil
 }
 
-func (l *Lexer) next() (rune, error) {
+func (l *Lexer) next() error {
 	if len(l.s) > 1 {
 		l.s = l.s[1:]
-		l.current = rune(l.s[0])
-		return l.current, nil
+		l.current = string(l.s[0])
+		return nil
 	}
-	l.current = rune(l.s[0])
+	l.current = string(l.s[0])
 	l.s = ""
-	return l.current, EndOfStringErrors
+	return ErrEndOfString
 }
 
 func (l *Lexer) Cut(lenToCut int) {
 	l.s = l.s[lenToCut:]
 	if len(l.s) != 0 {
-		l.current = rune(l.s[0])
+		l.current = string(l.s[0])
 	}
 	// TODO: think about error
 }
 
-func contains(ch rune, slice []rune) bool {
+func contains(ch string, slice []string) bool {
 	for _, el := range slice {
 		if el == ch {
 			return true
@@ -116,26 +122,31 @@ func (l *Lexer) lexString() (*Token, error) {
 	jsonString := ""
 
 	if l.current == JSONQuote {
-		l.next()
+
+		if err := l.next(); err != nil {
+			return nil, err
+		}
 	} else {
 		return nil, nil
 	}
 
 	for {
 		ch := l.current
-		if ch == JSONQuote {
-			l.next()
+		if string(ch) == JSONQuote {
+			if err := l.next(); err != nil {
+				log.Println(err)
+			}
+
 			return &Token{TokenType: JSONString, Val: jsonString}, nil
 		}
 		jsonString += string(ch)
 
-		_, err := l.next()
-		if errors.Is(err, EndOfStringErrors) {
+		err := l.next()
+		if errors.Is(err, ErrEndOfString) {
 			break
 		}
 	}
-	// log.Fatal("String must be ended with quote")
-	return nil, fmt.Errorf("string must be ended with \";\n%w", EndOfStringErrors) // TODO: add error
+	return nil, fmt.Errorf("string must be ended with \";\n%w", ErrEndOfString)
 }
 
 func (l *Lexer) lexNumber() (*Token, error) {
@@ -144,16 +155,14 @@ func (l *Lexer) lexNumber() (*Token, error) {
 
 	for {
 		ch := l.current
-		if contains(ch, numberChr) {
-			if ch == '.' {
-				isFloat = true
-			}
-			jsonNumber += string(ch)
-		} else {
+		if !contains(ch, numberChr) {
 			break
 		}
-		_, err := l.next()
-		if err != nil {
+		if ch == "." {
+			isFloat = true
+		}
+		jsonNumber += string(ch)
+		if err := l.next(); err != nil {
 			break
 		}
 	}
@@ -229,12 +238,17 @@ func (l *Lexer) Lex() ([]Token, error) {
 		// ---- json syntax ----
 		ch := l.current
 		if contains(ch, jsonWhitespace) {
-			l.next()
+			if err := l.next(); err != nil {
+				log.Println(err)
+			}
 		} else if contains(ch, jsonSyntax) {
 			tokens = append(tokens, Token{TokenType: JSONSyntax, Val: string(ch)})
-			l.next()
+			if err := l.next(); err != nil {
+				log.Println(err)
+			}
+
 		} else {
-			log.Printf("Invalid char %c", ch)
+			log.Printf("Invalid char %s", ch)
 			os.Exit(1)
 		}
 	}

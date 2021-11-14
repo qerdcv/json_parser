@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"gitlab.com/json_parser/lexer"
+	"github.com/qerdcv/json_parser/lexer"
 )
 
 var (
@@ -32,8 +32,8 @@ func TestNew(t *testing.T) {
 		t.Fatal("expected nil, got ", p)
 	}
 
-	if !errors.Is(err, EmptyTokensError) {
-		t.Fatalf("expected %e, got %e", EmptyTokensError, err)
+	if !errors.Is(err, ErrEmptyTokens) {
+		t.Fatalf("expected %e, got %e", ErrEmptyTokens, err)
 	}
 
 

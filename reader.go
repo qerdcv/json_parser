@@ -1,4 +1,4 @@
-package reader
+package main
 
 import (
 	"flag"
@@ -9,7 +9,7 @@ import (
 
 type Reader struct {}
 
-func New() *Reader {
+func NewReader() *Reader {
 	return &Reader{}
 }
 

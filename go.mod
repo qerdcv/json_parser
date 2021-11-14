@@ -1,3 +1,3 @@
-module gitlab.com/json_parser
+module github.com/qerdcv/json_parser
 
 go 1.17

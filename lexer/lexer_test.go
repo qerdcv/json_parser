@@ -12,18 +12,18 @@ func TestNew(t *testing.T) {
 		t.Fatal("lexer must be nil on empty string")
 	}
 
-	if !errors.Is(err, EmptyStringError) {
-		t.Fatalf("error must by %e, got %e", EmptyStringError, err)
+	if !errors.Is(err, ErrEmptyString) {
+		t.Fatalf("error must by %e, got %e", ErrEmptyString, err)
 	}
 
 
-	l, err = New("ABCD")
+	l, _ = New("ABCD")
 	if got, exp := l.s, "ABCD"; got != exp {
 		t.Fatalf("expected %s, got %s", exp, got)
 	}
 
-	if got, exp := l.current, 'A'; got != exp {
-		t.Fatalf("expected %c, got %c", exp, got)
+	if got, exp := l.current, "A"; got != exp {
+		t.Fatalf("expected %s, got %s", exp, got)
 	}
 }
 
@@ -151,24 +151,20 @@ func TestLexer_lexNumberFloat(t *testing.T) {
 func TestLexer_next(t *testing.T) {
 	l, _ := New("12")
 
-	if l.current != '1' {
-		t.Fatalf("expected '1', got %c", l.current)
+	if l.current != "1" {
+		t.Fatalf("expected '1', got %s", l.current)
 	}
 
-	c, _ := l.next()
+	err := l.next()
 
-	if c != l.current {
-		t.Fatalf("expected %c, got %c", c, l.current)
+	if err != nil {
+		t.Fatalf("expected nil, got %e", err)
 	}
 
-	newC, err := l.next()
+	err = l.next()
 
-	if newC != c {
-		t.Fatalf("expected %c, got %c", newC, c)
-	}
-
-	if err == nil || !errors.Is(err, EndOfStringErrors) {
-		t.Fatalf("expected %e, got %e", EndOfStringErrors, err)
+	if err == nil || !errors.Is(err, ErrEndOfString) {
+		t.Fatalf("expected %e, got %e", ErrEndOfString, err)
 	}
 }
 
