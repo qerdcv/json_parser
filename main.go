@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
+
 	"gitlab.com/json_parser/lexer"
 	"gitlab.com/json_parser/parser"
-	"gitlab.com/json_parser/reader"
-	"log"
 )
 
 func main() {
-	r := reader.New()
+	r := New()
 	l, err := lexer.New(r.Read())
 	if err != nil {
 		log.Fatal(err)

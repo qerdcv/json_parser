@@ -59,7 +59,7 @@ func (p *Parser) parseObject() map[string]interface{} {
 			return object // TODO: add err
 		}
 
-		if p.current.Val != string(lexer.JSONColon) {
+		if p.current.Val != lexer.JSONColon {
 			return object
 		}
 		p.next()
@@ -71,9 +71,9 @@ func (p *Parser) parseObject() map[string]interface{} {
 		current := p.current.Val
 		p.next()
 
-		if current == string(lexer.JSONBraceRight) {
+		if current == lexer.JSONBraceRight {
 			return object
-		} else if current != string(lexer.JSONComma) {
+		} else if current != lexer.JSONComma {
 			log.Fatal(fmt.Sprintf("expected comma have %s", current))
 		}
 	}
@@ -82,7 +82,7 @@ func (p *Parser) parseObject() map[string]interface{} {
 func (p *Parser) parseList() []interface{} {
 	var list []interface{}
 	token := p.current
-	if token.Val == string(lexer.JSONBracketRight) {
+	if token.Val == lexer.JSONBracketRight {
 		p.next()
 		return list
 	}
@@ -94,9 +94,9 @@ func (p *Parser) parseList() []interface{} {
 		token = p.current
 
 		p.next()
-		if token.Val == string(lexer.JSONBracketRight) {
+		if token.Val == lexer.JSONBracketRight {
 			return list
-		} else if token.Val != string(lexer.JSONComma) {
+		} else if token.Val != lexer.JSONComma {
 			log.Fatal(fmt.Sprintf("expected comma have %s", token.Val))
 		}
 	}
@@ -106,15 +106,15 @@ func (p *Parser) Parse(isRoot bool) (interface{}, error) {
 	token := p.current
 	p.next()
 
-	if isRoot && (token.Val != string(lexer.JSONBraceLeft) && token.Val != string(lexer.JSONBracketLeft)) {
+	if isRoot && (token.Val != lexer.JSONBraceLeft && token.Val != lexer.JSONBracketLeft) {
 		return nil, errors.New("JSON must starts with \"")
 	}
 
-	if token.Val == string(lexer.JSONBraceLeft) {
+	if token.Val == lexer.JSONBraceLeft {
 		return p.parseObject(), nil
 	}
 
-	if token.Val == string(lexer.JSONBracketLeft) {
+	if token.Val == lexer.JSONBracketLeft {
 		return p.parseList(), nil
 	}
 
@@ -132,7 +132,6 @@ func (p *Parser) Parse(isRoot bool) (interface{}, error) {
 		return true, nil
 	case lexer.JSONNull:
 		return nil, nil
-
 	}
 
 	if token.TokenType == lexer.JSONInt {
